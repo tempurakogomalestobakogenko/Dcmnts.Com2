@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANJAN DIGITAL VAULT X PRO</title>
+  <meta name="description" content="Premium Personal Document Vault — Anjan Dhar" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+/* ── ROOT VARIABLES ─────────────────────────────────────── */
+:root {
+  --bg:          #020b14;
+  --surface:     #071626;
+  --glass:       rgba(0, 240, 255, 0.04);
+  --glass-border:rgba(0, 240, 255, 0.18);
+  --cyan:        #00f0ff;
+  --cyan-dim:    rgba(0, 240, 255, 0.35);
+  --cyan-glow:   0 0 12px rgba(0,240,255,0.7), 0 0 30px rgba(0,240,255,0.3);
+  --purple:      #a020f0;
+  --purple-glow: 0 0 12px rgba(160,32,240,0.7);
+  --green:       #00ff88;
+  --red:         #ff2244;
+  --yellow:      #ffe600;
+  --text:        #c8e8f0;
+  --text-dim:    #5a8ca0;
+  --font-display: 'Orbitron', monospace;
+  --font-body:    'Rajdhani', sans-serif;
+  --font-mono:    'Share Tech Mono', monospace;
+  --radius:      12px;
+  --card-radius: 16px;
+  --transition:  0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+img { display: block; max-width: 100%; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+a { color: var(--cyan); text-decoration: none; }
+.hidden { display: none !important; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+/* PARTICLE CANVAS */
+#particleCanvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* LOADING SCREEN */
+#loadingScreen {
+  position: fixed; inset: 0; z-index: 9999; background: var(--bg);
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+}
+.loading-inner {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 20px; padding: 0 24px; width: 100%; max-width: 380px;
+}
+.loading-logo {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 10vw, 4rem); font-weight: 900;
+  letter-spacing: 0.15em; color: var(--cyan);
+  text-shadow: var(--cyan-glow); animation: pulse 1.5s ease-in-out infinite;
+}
+.logo-bracket { color: var(--purple); text-shadow: var(--purple-glow); }
+.loading-bar-wrap {
+  width: 100%; height: 4px; background: rgba(0,240,255,0.1);
+  border-radius: 2px; overflow: hidden;
+}
+.loading-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  border-radius: 2px; box-shadow: var(--cyan-glow); transition: width 0.08s linear;
+}
+.loading-status {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  color: var(--cyan-dim); letter-spacing: 0.1em;
+  text-align: center; animation: blink 1s step-end infinite;
+}
+
+/* LOGIN SCREEN */
+#loginScreen {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, #04182d 0%, var(--bg) 70%);
+}
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  pointer-events: none; z-index: 1;
+}
+.corner-decor {
+  position: absolute; width: 60px; height: 60px;
+  border-color: var(--cyan); border-style: solid; opacity: 0.4; z-index: 2;
+}
+.corner-decor.top-left    { top: 20px; left: 20px; border-width: 2px 0 0 2px; }
+.corner-decor.top-right   { top: 20px; right: 20px; border-width: 2px 2px 0 0; }
+.corner-decor.bottom-left { bottom: 20px; left: 20px; border-width: 0 0 2px 2px; }
+.corner-decor.bottom-right{ bottom: 20px; right: 20px; border-width: 0 2px 2px 0; }
+.login-container {
+  position: relative; z-index: 10; display: flex; flex-direction: column;
+  align-items: center; gap: 16px; padding: 40px 28px;
+  width: 100%; max-width: 420px;
+  background: rgba(7, 22, 38, 0.85);
+  border: 1px solid var(--glass-border); border-radius: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 40px rgba(0,240,255,0.08), 0 0 80px rgba(0,240,255,0.04);
+  margin: 16px;
+}
+.avatar-wrapper {
+  position: relative; width: 120px; height: 120px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ring { position: absolute; border-radius: 50%; border: 2px solid transparent; }
+.ring-1 { width: 120px; height: 120px; border-color: var(--cyan); box-shadow: var(--cyan-glow); animation: spin 4s linear infinite; border-top-color: transparent; border-right-color: transparent; }
+.ring-2 { width: 108px; height: 108px; border-color: var(--purple); box-shadow: var(--purple-glow); animation: spin 6s linear infinite reverse; border-bottom-color: transparent; }
+.ring-3 { width: 96px; height: 96px; border-color: rgba(0,240,255,0.3); animation: spin 3s linear infinite; border-left-color: transparent; }
+.avatar-hex {
+  width: 80px; height: 80px; border-radius: 50%; overflow: hidden;
+  background: var(--surface); border: 2px solid var(--cyan-dim);
+  display: flex; align-items: center; justify-content: center;
+}
+.avatar-hex img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-fallback {
+  font-family: var(--font-display); font-size: 1.4rem; color: var(--cyan);
+  background: var(--surface); width: 100%; height: 100%;
+  display: none; align-items: center; justify-content: center;
+}
+.profile-fallback {
+  font-family: var(--font-display); font-size: 1.2rem; color: var(--cyan);
+  background: var(--surface); width: 72px; height: 72px;
+  display: none; align-items: center; justify-content: center;
+  border-radius: 50%; border: 2px solid var(--cyan-dim);
+}
+.vault-title {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 5vw, 1.4rem); font-weight: 900;
+  letter-spacing: 0.2em; color: var(--cyan);
+  text-shadow: var(--cyan-glow); text-align: center;
+}
+.vault-subtitle { font-family: var(--font-display); font-size: 1rem; letter-spacing: 0.5em; color: var(--purple); text-shadow: var(--purple-glow); }
+.vault-tagline { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.3em; color: var(--text-dim); }
+.password-wrap {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: rgba(0,240,255,0.05); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 12px 16px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.password-wrap:focus-within { border-color: var(--cyan); box-shadow: var(--cyan-glow); }
+.lock-icon { font-size: 1.1rem; }
+.password-wrap input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font-mono);
+  font-size: 1rem; letter-spacing: 0.15em;
+}
+.password-wrap input::placeholder { color: var(--text-dim); letter-spacing: 0.1em; font-size: 0.85rem; }
+.eye-btn { font-size: 1rem; opacity: 0.6; transition: opacity 0.2s; padding: 0; }
+.eye-btn:hover { opacity: 1; }
+.access-denied {
+  display: none; width: 100%;
+  background: rgba(255,34,68,0.12); border: 1px solid var(--red);
+  border-radius: var(--radius); padding: 10px 16px;
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--red); letter-spacing: 0.1em; text-align: center;
+}
+.access-denied.visible { display: block; animation: shake 0.5s ease; }
+.denied-icon { font-size: 1rem; }
+.unlock-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(160,32,240,0.15));
+  border: 1px solid var(--cyan); border-radius: var(--radius);
+  color: var(--cyan); font-family: var(--font-display);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em;
+  text-shadow: var(--cyan-glow); box-shadow: var(--cyan-glow);
+  transition: all var(--transition); position: relative; overflow: hidden;
+}
+.unlock-btn::before {
+  content: ''; position: absolute; top: -50%; left: -100%;
+  width: 80px; height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(0,240,255,0.2), transparent);
+  transform: skewX(-20deg); animation: shimmer 3s infinite;
+}
+.unlock-btn:hover {
+  background: linear-gradient(135deg, rgba(0,240,255,0.25), rgba(160,32,240,0.25));
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0,240,255,0.5), 0 0 40px rgba(0,240,255,0.2);
+}
+.unlock-btn:active { transform: translateY(0); }
+.unlock-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
+.btn-icon { margin-right: 6px; }
+.hint-text { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); opacity: 0.6; letter-spacing: 0.1em; }
+.shake { animation: shake 0.5s ease; }
+
+/* FINGERPRINT SCREEN */
+#fingerprintScreen {
+  position: fixed; inset: 0; z-index: 950;
+  background: rgba(2,11,20,0.97);
+  display: flex; align-items: center; justify-content: center;
+}
+.fp-inner { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 24px; }
+.fp-icon { width: 140px; height: 140px; }
+.fp-svg {
+  width: 100%; height: 100%; color: var(--cyan);
+  filter: drop-shadow(0 0 8px var(--cyan)) drop-shadow(0 0 20px rgba(0,240,255,0.4));
+}
+.fp-line { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 300; stroke-dashoffset: 300; }
+.fp-dot { fill: currentColor; animation: pulse 0.8s ease infinite; }
+.fp-l1 { animation: drawFp 0.6s 0.1s forwards; }
+.fp-l2 { animation: drawFp 0.6s 0.3s forwards; }
+.fp-l3 { animation: drawFp 0.6s 0.5s forwards; }
+.fp-l4 { animation: drawFp 0.6s 0.7s forwards; }
+.fp-status {
+  font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.2em;
+  color: var(--cyan); text-shadow: var(--cyan-glow); animation: blink 0.8s step-end infinite;
+}
+.fp-bar-wrap { width: 220px; height: 3px; background: rgba(0,240,255,0.1); border-radius: 2px; overflow: hidden; }
+.fp-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--cyan)); border-radius: 2px; box-shadow: var(--cyan-glow); transition: width 0.06s linear; }
+.fp-sub { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; }
+
+/* DASHBOARD */
+#dashboard { position: relative; z-index: 10; min-height: 100vh; padding-bottom: 60px; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(2, 11, 20, 0.9); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.vault-logo-small { font-family: var(--font-display); font-size: 1rem; font-weight: 900; color: var(--cyan); text-shadow: var(--cyan-glow); }
+.vault-name-small { font-family: var(--font-display); font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-dim); display: none; }
+@media (min-width: 520px) { .vault-name-small { display: block; } }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,240,255,0.06); border: 1px solid var(--glass-border);
+  border-radius: 20px; padding: 5px 12px;
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--text);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s ease infinite; }
+.status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.lock-vault-btn {
+  background: rgba(255,34,68,0.1); border: 1px solid rgba(255,34,68,0.4);
+  border-radius: 20px; padding: 5px 14px; color: var(--red);
+  font-family: var(--font-display); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.1em; transition: all var(--transition);
+}
+.lock-vault-btn:hover { background: rgba(255,34,68,0.2); box-shadow: 0 0 12px rgba(255,34,68,0.4); }
+.hero-strip {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 20px; padding: 28px 20px 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.hero-date { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 4px; }
+.hero-clock { font-family: var(--font-display); font-size: clamp(1.8rem, 7vw, 3rem); font-weight: 900; color: var(--cyan); text-shadow: var(--cyan-glow); letter-spacing: 0.05em; line-height: 1; }
+.hero-welcome { font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; color: var(--text-dim); letter-spacing: 0.15em; margin-top: 8px; }
+.highlight { color: var(--cyan); text-shadow: var(--cyan-glow); }
+.hero-right { display: flex; gap: 16px; flex-wrap: wrap; }
+.stat-box { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 14px 22px; text-align: center; min-width: 100px; }
+.stat-num { display: block; font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--cyan); text-shadow: var(--cyan-glow); line-height: 1; }
+.stat-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.1em; display: block; margin-top: 4px; }
+
+/* PROFILE */
+.profile-section { padding: 24px 20px 0; }
+.glass-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--card-radius); backdrop-filter: blur(16px); padding: 24px; position: relative; overflow: hidden; }
+.glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent); animation: scanline 3s linear infinite; }
+.profile-card { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+.profile-avatar-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.profile-ring { position: absolute; border-radius: 50%; border: 2px solid var(--cyan); }
+.pr-1 { width: 100px; height: 100px; border-color: var(--cyan); opacity: 0.5; animation: spin 5s linear infinite; border-top-color: transparent; }
+.pr-2 { width: 88px; height: 88px; border-color: var(--purple); opacity: 0.4; animation: spin 7s linear infinite reverse; border-bottom-color: transparent; }
+.profile-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cyan-dim); position: relative; z-index: 1; }
+.profile-info { flex: 1; min-width: 200px; }
+.profile-name { font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: var(--cyan); text-shadow: var(--cyan-glow); letter-spacing: 0.15em; margin-bottom: 4px; }
+.profile-sub { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; }
+.profile-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { background: rgba(0,240,255,0.07); border: 1px solid rgba(0,240,255,0.2); border-radius: 20px; padding: 4px 12px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text); letter-spacing: 0.05em; }
+.profile-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.qr-wrap { width: 90px; height: 90px; background: white; border-radius: 8px; padding: 6px; box-shadow: 0 0 20px rgba(0,240,255,0.3); }
+.qr-svg { width: 100%; height: 100%; color: #111; }
+.qr-label { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--cyan); text-shadow: var(--cyan-glow); }
+
+/* FILTER */
+.filter-section { padding: 24px 20px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.filter-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.15em; margin-right: 4px; }
+.filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-pill { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 7px 18px; font-family: var(--font-display); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text-dim); transition: all var(--transition); }
+.filter-pill:hover { border-color: var(--cyan); color: var(--cyan); }
+.filter-pill.active { background: rgba(0,240,255,0.12); border-color: var(--cyan); color: var(--cyan); text-shadow: var(--cyan-glow); box-shadow: 0 0 10px rgba(0,240,255,0.2); }
+
+/* DOCS */
+.docs-section { padding: 24px 20px 0; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.section-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; letter-spacing: 0.15em; color: var(--text); }
+.title-accent { color: var(--cyan); text-shadow: var(--cyan-glow); }
+.doc-count-badge { background: rgba(0,240,255,0.1); border: 1px solid var(--cyan-dim); border-radius: 20px; padding: 4px 14px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--cyan); letter-spacing: 0.1em; }
+.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 20px; }
+
+/* DOC CARD */
+.doc-card {
+  background: linear-gradient(145deg, rgba(7,22,38,0.95), rgba(4,12,24,0.98));
+  border: 1px solid var(--glass-border); border-radius: var(--card-radius);
+  overflow: hidden; position: relative;
+  transition: transform var(--transition), box-shadow var(--transition);
+  animation: floatCard 4s ease-in-out infinite;
+  display: flex; flex-direction: column;
+}
+.doc-card:nth-child(odd)  { animation-delay: 0s; }
+.doc-card:nth-child(even) { animation-delay: 2s; }
+.doc-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 0 20px rgba(0,240,255,0.35), 0 0 50px rgba(0,240,255,0.1), 0 20px 40px rgba(0,0,0,0.4); border-color: var(--cyan); animation-play-state: paused; }
+.doc-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: borderSlide 3s linear infinite; z-index: 2; }
+.doc-card::after { content: ''; position: absolute; inset: 0; border-radius: var(--card-radius); background: radial-gradient(ellipse at 50% 0%, rgba(0,240,255,0.05) 0%, transparent 70%); pointer-events: none; }
+.card-preview { width: 100%; height: 140px; overflow: hidden; background: #041018; position: relative; flex-shrink: 0; }
+.card-preview img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.doc-card:hover .card-preview img { transform: scale(1.05); }
+.card-preview-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; background: linear-gradient(135deg, #031020, #061828); }
+.pdf-icon-big { font-size: 3rem; filter: drop-shadow(0 0 8px var(--cyan)); }
+.pdf-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--cyan); letter-spacing: 0.1em; }
+.card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.card-cat { display: inline-block; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.15em; padding: 3px 10px; border-radius: 10px; align-self: flex-start; }
+.cat-identity  { background: rgba(0,240,255,0.1);  color: var(--cyan);  border: 1px solid rgba(0,240,255,0.3); }
+.cat-financial { background: rgba(0,255,136,0.1);  color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+.cat-education { background: rgba(160,32,240,0.12); color: #c76dff;     border: 1px solid rgba(160,32,240,0.3); }
+.card-title { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text); line-height: 1.3; }
+.card-actions { display: flex; gap: 8px; margin-top: auto; }
+.card-btn { flex: 1; padding: 9px 8px; border-radius: 8px; font-family: var(--font-display); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; transition: all var(--transition); }
+.btn-view { background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.35); color: var(--cyan); }
+.btn-view:hover { background: rgba(0,240,255,0.2); box-shadow: 0 0 12px rgba(0,240,255,0.3); }
+.btn-dl { background: rgba(160,32,240,0.1); border: 1px solid rgba(160,32,240,0.35); color: #c76dff; }
+.btn-dl:hover { background: rgba(160,32,240,0.2); box-shadow: var(--purple-glow); }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,5,12,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 16px; animation: fadeIn 0.25s ease; }
+.modal-box { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 20px; width: 100%; max-width: 780px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 60px rgba(0,240,255,0.2), 0 40px 80px rgba(0,0,0,0.6); animation: slideUp 0.3s ease; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--glass-border); background: rgba(0,240,255,0.04); }
+.modal-title { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.15em; color: var(--cyan); text-shadow: var(--cyan-glow); }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,34,68,0.15); border: 1px solid rgba(255,34,68,0.4); color: var(--red); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all var(--transition); }
+.modal-close:hover { background: rgba(255,34,68,0.3); transform: rotate(90deg); }
+.modal-body { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; align-items: center; justify-content: center; background: #020b14; min-height: 300px; }
+.modal-body img { max-width: 100%; max-height: 65vh; object-fit: contain; display: block; }
+.modal-body iframe { width: 100%; height: 65vh; border: none; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--glass-border); display: flex; justify-content: center; }
+.modal-dl-btn { background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(160,32,240,0.15)); border: 1px solid var(--cyan); border-radius: var(--radius); padding: 11px 32px; color: var(--cyan); font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-shadow: var(--cyan-glow); box-shadow: 0 0 12px rgba(0,240,255,0.25); transition: all var(--transition); }
+.modal-dl-btn:hover { background: linear-gradient(135deg, rgba(0,240,255,0.25), rgba(160,32,240,0.25)); box-shadow: 0 0 20px rgba(0,240,255,0.4); transform: translateY(-2px); }
+
+/* FOOTER */
+.vault-footer { margin-top: 48px; padding: 28px 20px; border-top: 1px solid var(--glass-border); text-align: center; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.08em; line-height: 2; background: rgba(0,240,255,0.02); }
+.footer-enc { color: var(--cyan); opacity: 0.5; }
+
+/* KEYFRAMES */
+@keyframes spin       { to { transform: rotate(360deg); } }
+@keyframes pulse      { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes blink      { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes shimmer    { 0% { left: -100%; } 100% { left: 200%; } }
+@keyframes shake      { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-8px); } 30% { transform: translateX(8px); } 45% { transform: translateX(-6px); } 60% { transform: translateX(6px); } 75% { transform: translateX(-4px); } 90% { transform: translateX(4px); } }
+@keyframes floatCard  { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+@keyframes borderSlide{ 0% { left: -100%; } 100% { left: 100%; } }
+@keyframes scanline   { 0% { left: -100%; } 100% { left: 100%; } }
+@keyframes drawFp     { to { stroke-dashoffset: 0; } }
+@keyframes fadeIn     { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp    { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 480px) {
+  .hero-strip { flex-direction: column; align-items: flex-start; }
+  .hero-right  { width: 100%; }
+  .stat-box    { flex: 1; }
+  .profile-card { flex-direction: column; align-items: center; text-align: center; }
+  .profile-badges { justify-content: center; }
+  .profile-qr { width: 100%; align-items: center; }
+}
+@media (min-width: 768px)  { .docs-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
+@media (min-width: 1024px) { .docs-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } #dashboard { padding-left: 24px; padding-right: 24px; } }
+  </style>
+</head>
+<body>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen">
+    <div class="loading-inner">
+      <div class="loading-logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">ADV</span>
+        <span class="logo-bracket">]</span>
+      </div>
+      <div class="loading-bar-wrap">
+        <div class="loading-bar" id="loadingBar"></div>
+      </div>
+      <p class="loading-status" id="loadingStatus">INITIALIZING VAULT SYSTEM...</p>
+    </div>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="hidden">
+    <div class="login-container">
+      <div class="avatar-wrapper">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="avatar-hex">
+          <!-- 🔴 LOGIN AVATAR: Tomar photo URL niche diye dao -->
+          <img
+            id="loginAvatarImg"
+            src="https://i.ibb.co/cc6HBFC1/Screenshot-20260607-185344-Instagram.jpg"
+            alt="Anjan Dhar"
+            onerror="this.style.display='none'; document.getElementById('loginAvatarFallback').style.display='flex';"
+          />
+          <div class="avatar-fallback" id="loginAvatarFallback">AD</div>
+        </div>
+      </div>
+      <h1 class="vault-title">ANJAN DIGITAL VAULT</h1>
+      <p class="vault-subtitle">X&nbsp;&nbsp;P&nbsp;&nbsp;R&nbsp;&nbsp;O</p>
+      <p class="vault-tagline">SECURE · ENCRYPTED · PRIVATE</p>
+      <div class="password-wrap" id="passwordWrap">
+        <span class="lock-icon">🔐</span>
+        <input type="password" id="passwordInput" placeholder="Enter vault key..." autocomplete="current-password" />
+        <button class="eye-btn" id="eyeBtn" title="Toggle visibility">👁</button>
+      </div>
+      <div class="access-denied" id="accessDenied">
+        <span class="denied-icon">⛔</span> <span id="deniedMsg">ACCESS DENIED — INVALID CREDENTIALS</span>
+      </div>
+      <button class="unlock-btn" id="unlockBtn">
+        <span class="btn-icon">🔓</span> <span id="unlockBtnText">UNLOCK VAULT</span>
+      </button>
+      <p class="hint-text">Secured with server-side authentication</p>
+    </div>
+    <div class="scanlines"></div>
+    <div class="corner-decor top-left"></div>
+    <div class="corner-decor top-right"></div>
+    <div class="corner-decor bottom-left"></div>
+    <div class="corner-decor bottom-right"></div>
+  </div>
+
+  <!-- FINGERPRINT SCREEN -->
+  <div id="fingerprintScreen" class="hidden">
+    <div class="fp-inner">
+      <div class="fp-icon" id="fpIcon">
+        <svg viewBox="0 0 100 100" class="fp-svg">
+          <path class="fp-line fp-l1" d="M50,10 Q80,10 80,50 Q80,90 50,90 Q20,90 20,50 Q20,10 50,10"/>
+          <path class="fp-line fp-l2" d="M50,20 Q73,20 73,50 Q73,80 50,80 Q27,80 27,50 Q27,20 50,20"/>
+          <path class="fp-line fp-l3" d="M50,30 Q67,30 67,50 Q67,70 50,70 Q33,70 33,50 Q33,30 50,30"/>
+          <path class="fp-line fp-l4" d="M50,40 Q60,40 60,50 Q60,60 50,60 Q40,60 40,50 Q40,40 50,40"/>
+          <circle class="fp-dot" cx="50" cy="50" r="3"/>
+        </svg>
+      </div>
+      <p class="fp-status" id="fpStatus">SCANNING BIOMETRICS...</p>
+      <div class="fp-bar-wrap"><div class="fp-bar" id="fpBar"></div></div>
+      <p class="fp-sub" id="fpSub">Please wait — verifying identity</p>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="vault-logo-small"><span class="logo-bracket">[</span>ADV<span class="logo-bracket">]</span></div>
+        <span class="vault-name-small">ANJAN DIGITAL VAULT X PRO</span>
+      </div>
+      <div class="topbar-right">
+        <div class="status-pill" id="netStatus">
+          <span class="status-dot" id="netDot"></span>
+          <span id="netLabel">ONLINE</span>
+        </div>
+        <div class="status-pill" id="batteryPill">
+          <span class="bat-icon" id="batIcon">🔋</span>
+          <span id="batLabel">--</span>
+        </div>
+        <button class="lock-vault-btn" id="lockVaultBtn" title="Lock Vault">🔒 LOCK</button>
+      </div>
+    </header>
+
+    <section class="hero-strip">
+      <div class="hero-left">
+        <p class="hero-date" id="heroDate">--</p>
+        <h2 class="hero-clock" id="heroClock">--:--:--</h2>
+        <p class="hero-welcome">WELCOME BACK, <span class="highlight">ANJAN</span></p>
+      </div>
+      <div class="hero-right">
+        <div class="stat-box">
+          <span class="stat-num" id="totalDocs">0</span>
+          <span class="stat-label">TOTAL DOCUMENTS</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" id="totalCats">0</span>
+          <span class="stat-label">CATEGORIES</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <div class="profile-card glass-card">
+        <div class="profile-avatar-wrap">
+          <div class="profile-ring pr-1"></div>
+          <div class="profile-ring pr-2"></div>
+          <!-- 🔴 DASHBOARD PROFILE AVATAR: Tomar photo URL niche diye dao -->
+          <img
+            id="profileImg"
+            src="https://i.ibb.co/cc6HBFC1/Screenshot-20260607-185344-Instagram.jpg"
+            alt="Anjan Dhar"
+            class="profile-img"
+            onerror="this.style.display='none'; document.getElementById('profileFallback').style.display='flex';"
+          />
+          <div class="profile-fallback" id="profileFallback">AD</div>
+        </div>
+        <div class="profile-info">
+          <h3 class="profile-name">ANJAN DHAR</h3>
+          <p class="profile-sub">B.A. Student · Suryasen College, Siliguri</p>
+          <div class="profile-badges">
+            <span class="badge">🆔 Family ID: DHAR-2005-SLG</span>
+            <span class="badge">📅 DOB: 2005</span>
+            <span class="badge">🏛️ West Bengal, India</span>
+          </div>
+        </div>
+        <div class="profile-qr">
+          <div class="qr-wrap">
+            <svg class="qr-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="5" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
+              <rect x="12" y="12" width="16" height="16" rx="1" fill="currentColor"/>
+              <rect x="65" y="5" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
+              <rect x="72" y="12" width="16" height="16" rx="1" fill="currentColor"/>
+              <rect x="5" y="65" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
+              <rect x="12" y="72" width="16" height="16" rx="1" fill="currentColor"/>
+              <rect x="42" y="5" width="6" height="6" fill="currentColor"/>
+              <rect x="52" y="5" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="15" width="6" height="6" fill="currentColor"/>
+              <rect x="56" y="18" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="42" width="6" height="6" fill="currentColor"/>
+              <rect x="52" y="42" width="6" height="6" fill="currentColor"/>
+              <rect x="62" y="42" width="6" height="6" fill="currentColor"/>
+              <rect x="72" y="42" width="6" height="6" fill="currentColor"/>
+              <rect x="82" y="42" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="52" width="6" height="6" fill="currentColor"/>
+              <rect x="62" y="52" width="6" height="6" fill="currentColor"/>
+              <rect x="82" y="52" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="62" width="6" height="6" fill="currentColor"/>
+              <rect x="52" y="62" width="6" height="6" fill="currentColor"/>
+              <rect x="72" y="62" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="72" width="6" height="6" fill="currentColor"/>
+              <rect x="62" y="72" width="6" height="6" fill="currentColor"/>
+              <rect x="82" y="72" width="6" height="6" fill="currentColor"/>
+              <rect x="42" y="82" width="6" height="6" fill="currentColor"/>
+              <rect x="52" y="82" width="6" height="6" fill="currentColor"/>
+              <rect x="62" y="82" width="6" height="6" fill="currentColor"/>
+              <rect x="72" y="82" width="6" height="6" fill="currentColor"/>
+            </svg>
+          </div>
+          <p class="qr-label">DIGITAL ID</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="filter-section">
+      <div class="filter-label">FILTER BY CATEGORY</div>
+      <div class="filter-pills" id="filterPills">
+        <button class="filter-pill active" data-cat="all">ALL</button>
+        <button class="filter-pill" data-cat="identity">IDENTITY</button>
+        <button class="filter-pill" data-cat="financial">FINANCIAL</button>
+        <button class="filter-pill" data-cat="education">EDUCATION</button>
+      </div>
+    </section>
+
+    <section class="docs-section">
+      <div class="section-header">
+        <h2 class="section-title"><span class="title-accent">◈</span> VAULT DOCUMENTS</h2>
+        <span class="doc-count-badge" id="visibleCount">0 FILES</span>
+      </div>
+      <div class="docs-grid" id="docsGrid"></div>
+    </section>
+
+    <footer class="vault-footer">
+      <p>ANJAN DIGITAL VAULT X PRO &nbsp;|&nbsp; Built by <strong>Anjan Dhar</strong> &nbsp;|&nbsp; All Rights Reserved © 2026</p>
+      <p class="footer-enc">🔐 Server-Authenticated · Zero Password in Frontend · Secure</p>
+    </footer>
+  </div>
+
+  <!-- DOCUMENT VIEW MODAL -->
+  <div id="docModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle">Document</span>
+        <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="modal-dl-btn" id="modalDlBtn">⬇ DOWNLOAD FILE</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════
+   ⚙️  CONFIG — Backend URL & Photo URL
+   ════════════════════════════════════════════════════════ */
+
+// ✅ Backend Railway URL — already set!
+const BACKEND_URL = 'https://dcmnts-vault-production.up.railway.app';
+
+// 🔴 PHOTO URL — Replace kore dao tomar actual photo link diye
+// Login page + Dashboard dono jaygay same URL use hobe
+// Example: 'https://i.ibb.co/xxxxxxxx/anjan.jpg'
+//          'https://drive.google.com/uc?export=view&id=XXXXXXX'
+//          'https://raw.githubusercontent.com/anjamd0111/...'
+const PHOTO_URL = 'https://i.ibb.co/cc6HBFC1/Screenshot-20260607-185344-Instagram.jpg';
+//                ☝️ Ei line er URL ta change koro apnar actual photo diye
+
+/* ─────────────────────────────────────────────────────────────
+   DOCUMENT MAP
+───────────────────────────────────────────────────────────── */
+// 🔴 DOCUMENTS — file field ta ekhon direct ImgBB URL
+// Pore nijer URL diye replace koro
+const DOCUMENTS = [
+  { file: 'https://i.ibb.co/0y6X9h1k/file-0000000017a07206962643360fdf823a.png', title: 'Aadhaar Card',                 category: 'identity',  type: 'image', icon: '🪪' },
+  { file: 'https://i.ibb.co/CHANGE_ME/ration-card.jpg',                           title: 'Ration Card',                  category: 'identity',  type: 'image', icon: '🪪' },
+  { file: 'https://i.ibb.co/CHANGE_ME/voter-card.jpg',                            title: 'Voter ID Card',                category: 'identity',  type: 'image', icon: '🗳️' },
+  { file: 'https://i.ibb.co/CHANGE_ME/pan-card.jpg',                              title: 'PAN Card',                     category: 'identity',  type: 'image', icon: '💼' },
+  { file: 'https://i.ibb.co/CHANGE_ME/driving-licence.jpg',                       title: 'Driving Licence',              category: 'identity',  type: 'image', icon: '🚗' },
+  { file: 'https://i.ibb.co/CHANGE_ME/birth-certificate.jpg',                     title: 'Birth Certificate',            category: 'identity',  type: 'image', icon: '👶' },
+  { file: 'https://i.ibb.co/CHANGE_ME/passbook.jpg',                              title: 'Bank Passbook',                category: 'financial', type: 'image', icon: '🏦' },
+  { file: 'https://i.ibb.co/CHANGE_ME/atm-card.jpg',                              title: 'ATM Card',                     category: 'financial', type: 'image', icon: '💳' },
+  { file: 'https://i.ibb.co/CHANGE_ME/madhyamik-result.jpg',                      title: 'Madhyamik Result',             category: 'education', type: 'image', icon: '📊' },
+  { file: 'https://i.ibb.co/CHANGE_ME/madhyamik-certificate.jpg',                 title: 'Madhyamik Certificate',        category: 'education', type: 'image', icon: '🏅' },
+  { file: 'https://i.ibb.co/CHANGE_ME/hs-result.jpg',                             title: 'Higher Secondary Result',      category: 'education', type: 'image', icon: '📈' },
+  { file: 'https://i.ibb.co/CHANGE_ME/hs-certificate.jpg',                        title: 'Higher Secondary Certificate', category: 'education', type: 'image', icon: '🎖️' },
+  { file: 'https://i.ibb.co/CHANGE_ME/college-admit-card.jpg',                    title: 'College Admit Card',           category: 'education', type: 'image', icon: '🎫' },
+  { file: 'https://i.ibb.co/CHANGE_ME/college-registration-card.jpg',             title: 'College Registration Card',    category: 'education', type: 'image', icon: '📋' },
+  { file: 'https://i.ibb.co/CHANGE_ME/college-file.jpg',                          title: 'College File',                 category: 'education', type: 'image', icon: '📝' },
+  { file: 'https://i.ibb.co/CHANGE_ME/graduation-certificate.jpg',                title: 'Graduation Certificate',       category: 'education', type: 'image', icon: '🎓' },
+];
+
+const DOCS_BASE = BACKEND_URL + '/api/doc/';
+
+/* ─────────────────────────────────────────────────────────────
+   SESSION
+───────────────────────────────────────────────────────────── */
+const SESSION_KEY = '__vault_token__';
+function getToken()       { return sessionStorage.getItem(SESSION_KEY); }
+function saveToken(token) { sessionStorage.setItem(SESSION_KEY, token); }
+function clearToken()     { sessionStorage.removeItem(SESSION_KEY); }
+
+/* ─────────────────────────────────────────────────────────────
+   PHOTO LOADER — sets login + dashboard avatar from PHOTO_URL
+───────────────────────────────────────────────────────────── */
+function applyPhotos() {
+  const loginImg   = document.getElementById('loginAvatarImg');
+  const profileImg = document.getElementById('profileImg');
+
+  [loginImg, profileImg].forEach(img => {
+    if (!img) return;
+    img.src = PHOTO_URL;
+  });
+}
+// Run immediately on page load
+applyPhotos();
+
+/* ─────────────────────────────────────────────────────────────
+   SOUND ENGINE
+───────────────────────────────────────────────────────────── */
+const SFX = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return ctx;
+  }
+  function tone({ freq=440, type='sine', gain=0.4, start=0, dur=0.15, ramp=true }={}) {
+    const ac=getCtx(), osc=ac.createOscillator(), g=ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type=type; osc.frequency.setValueAtTime(freq, ac.currentTime+start);
+    g.gain.setValueAtTime(gain, ac.currentTime+start);
+    if(ramp) g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+start+dur);
+    osc.start(ac.currentTime+start); osc.stop(ac.currentTime+start+dur+0.02);
+  }
+  return {
+    click()    { tone({freq:880,type:'square',gain:0.18,dur:0.06}); tone({freq:1200,type:'square',gain:0.08,start:0.04,dur:0.05}); },
+    denied()   { tone({freq:180,type:'sawtooth',gain:0.35,dur:0.18}); tone({freq:140,type:'sawtooth',gain:0.3,start:0.16,dur:0.22}); tone({freq:100,type:'sawtooth',gain:0.25,start:0.35,dur:0.25}); },
+    unlock()   { [0,0.12,0.24,0.36].forEach((t,i)=>{ const f=[440,554,659,880]; tone({freq:f[i],type:'sine',gain:0.3,start:t,dur:0.22}); }); },
+    scanBeep() { tone({freq:600,type:'sine',gain:0.15,dur:0.08}); tone({freq:900,type:'sine',gain:0.12,start:0.1,dur:0.08}); tone({freq:1200,type:'sine',gain:0.10,start:0.2,dur:0.08}); },
+    granted()  { tone({freq:660,type:'sine',gain:0.35,dur:0.18}); tone({freq:880,type:'sine',gain:0.35,start:0.2,dur:0.18}); tone({freq:1320,type:'sine',gain:0.30,start:0.4,dur:0.30}); },
+    download() { tone({freq:740,type:'sine',gain:0.22,dur:0.10}); tone({freq:1047,type:'sine',gain:0.18,start:0.1,dur:0.12}); },
+    lock()     { tone({freq:520,type:'square',gain:0.22,dur:0.08}); tone({freq:320,type:'square',gain:0.28,start:0.09,dur:0.14}); tone({freq:180,type:'square',gain:0.20,start:0.22,dur:0.12}); },
+  };
+})();
+
+const CAT_ICONS = { identity:'🪪', financial:'💳', education:'🎓' };
+
+/* ─────────────────────────────────────────────────────────────
+   PARTICLES
+───────────────────────────────────────────────────────────── */
+(function initParticles() {
+  const canvas=document.getElementById('particleCanvas'), ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  function Particle(){ this.reset(); }
+  Particle.prototype.reset=function(){
+    this.x=Math.random()*W; this.y=Math.random()*H;
+    this.vx=(Math.random()-0.5)*0.4; this.vy=(Math.random()-0.5)*0.4;
+    this.r=Math.random()*1.5+0.3; this.a=Math.random()*0.6+0.1;
+    this.color=Math.random()>0.5?`rgba(0,240,255,${this.a})`:`rgba(160,32,240,${this.a*0.7})`;
+  };
+  Particle.prototype.update=function(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset(); };
+  const COUNT=Math.min(120,Math.floor(W*H/12000));
+  for(let i=0;i<COUNT;i++) particles.push(new Particle());
+  function connect(){
+    const DIST=120;
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<DIST){ ctx.beginPath(); ctx.strokeStyle=`rgba(0,240,255,${(1-d/DIST)*0.12})`; ctx.lineWidth=0.5; ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); }
+      }
+    }
+  }
+  function loop(){ ctx.clearRect(0,0,W,H); particles.forEach(p=>{ p.update(); ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); }); connect(); requestAnimationFrame(loop); }
+  loop();
+})();
+
+/* ─────────────────────────────────────────────────────────────
+   LOADING SCREEN
+───────────────────────────────────────────────────────────── */
+const LOADING_MESSAGES = [
+  'INITIALIZING VAULT SYSTEM...',
+  'LOADING ENCRYPTION MODULES...',
+  'VERIFYING SECURE CHANNEL...',
+  'BUILDING DOCUMENT INDEX...',
+  'PREPARING USER INTERFACE...',
+  'VAULT READY.',
+];
+
+(function runLoadingScreen() {
+  const bar=document.getElementById('loadingBar'), status=document.getElementById('loadingStatus');
+  let pct=0, mIdx=0;
+  const interval=setInterval(()=>{
+    pct+=Math.random()*18+4; if(pct>100) pct=100;
+    bar.style.width=pct+'%';
+    const newIdx=Math.floor((pct/100)*(LOADING_MESSAGES.length-1));
+    if(newIdx!==mIdx){ mIdx=newIdx; status.textContent=LOADING_MESSAGES[mIdx]; }
+    if(pct>=100){
+      clearInterval(interval);
+      status.textContent=LOADING_MESSAGES[LOADING_MESSAGES.length-1];
+      setTimeout(()=>{
+        document.getElementById('loadingScreen').style.display='none';
+        const existing = getToken();
+        if(existing) {
+          verifyExistingSession(existing);
+        } else {
+          document.getElementById('loginScreen').classList.remove('hidden');
+        }
+      }, 500);
+    }
+  }, 120);
+})();
+
+/* Verify existing session */
+async function verifyExistingSession(token) {
+  try {
+    const res = await fetch(BACKEND_URL + '/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showFingerprintScreen();
+    } else {
+      clearToken();
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+  } catch {
+    clearToken();
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LOGIN / AUTH
+───────────────────────────────────────────────────────────── */
+const passwordInput = document.getElementById('passwordInput');
+const unlockBtn     = document.getElementById('unlockBtn');
+const accessDenied  = document.getElementById('accessDenied');
+const eyeBtn        = document.getElementById('eyeBtn');
+const passwordWrap  = document.getElementById('passwordWrap');
+
+eyeBtn.addEventListener('click', () => {
+  SFX.click();
+  const isText=passwordInput.type==='text';
+  passwordInput.type=isText?'password':'text';
+  eyeBtn.textContent=isText?'👁':'🙈';
+});
+
+passwordInput.addEventListener('keydown', e => { if(e.key==='Enter') attemptUnlock(); });
+unlockBtn.addEventListener('click', attemptUnlock);
+
+async function attemptUnlock() {
+  const val = passwordInput.value.trim();
+  if (!val) return;
+
+  unlockBtn.disabled = true;
+  document.getElementById('unlockBtnText').textContent = 'VERIFYING...';
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: val })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.token) {
+      SFX.unlock();
+      saveToken(data.token);
+      passwordInput.value = '';
+      document.getElementById('loginScreen').classList.add('hidden');
+      showFingerprintScreen();
+    } else {
+      SFX.denied();
+      let msg = 'ACCESS DENIED — INVALID CREDENTIALS';
+      if (data.message === 'TOO_MANY_ATTEMPTS') {
+        msg = '⏳ TOO MANY ATTEMPTS — WAIT 15 MINUTES';
+      }
+      document.getElementById('deniedMsg').textContent = msg;
+      accessDenied.classList.add('visible');
+      passwordWrap.classList.add('shake');
+      passwordInput.value = '';
+      setTimeout(() => { passwordWrap.classList.remove('shake'); }, 600);
+      setTimeout(() => { accessDenied.classList.remove('visible'); }, 3000);
+    }
+  } catch (err) {
+    SFX.denied();
+    document.getElementById('deniedMsg').textContent = '⚠ SERVER OFFLINE — CHECK CONNECTION';
+    accessDenied.classList.add('visible');
+    setTimeout(() => { accessDenied.classList.remove('visible'); }, 4000);
+  } finally {
+    unlockBtn.disabled = false;
+    document.getElementById('unlockBtnText').textContent = 'UNLOCK VAULT';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FINGERPRINT SCREEN
+───────────────────────────────────────────────────────────── */
+function showFingerprintScreen() {
+  const fpScreen=document.getElementById('fingerprintScreen');
+  const fpBar=document.getElementById('fpBar');
+  const fpStatus=document.getElementById('fpStatus');
+  const fpSub=document.getElementById('fpSub');
+  fpScreen.classList.remove('hidden');
+  const steps=[
+    [0,  'SCANNING BIOMETRICS...',   'Place finger on sensor'],
+    [30, 'READING FINGERPRINT...',   'Processing biometric data'],
+    [55, 'MATCHING IDENTITY...',     'Comparing with vault profile'],
+    [78, 'IDENTITY VERIFIED ✓',      'Welcome, Anjan Dhar'],
+    [100,'ACCESS GRANTED ✓',         'Opening secure vault...']
+  ];
+  let s=0;
+  const interval=setInterval(()=>{
+    if(s>=steps.length){ clearInterval(interval); setTimeout(()=>{ fpScreen.classList.add('hidden'); enterDashboard(); },600); return; }
+    const[pct,msg,sub]=steps[s];
+    fpBar.style.width=pct+'%'; fpStatus.textContent=msg; fpSub.textContent=sub;
+    if(s<steps.length-1) SFX.scanBeep(); else SFX.granted();
+    s++;
+  },700);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────────────────────────────── */
+function enterDashboard() {
+  document.getElementById('dashboard').classList.remove('hidden');
+  initClock(); initBattery(); initNetwork();
+  renderDocuments('all'); updateCounts(); bindFilterPills();
+}
+
+document.getElementById('lockVaultBtn').addEventListener('click', async () => {
+  SFX.lock();
+  const token = getToken();
+  if (token) {
+    try { await fetch(BACKEND_URL+'/api/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})}); } catch {}
+  }
+  clearToken();
+  document.getElementById('dashboard').classList.add('hidden');
+  passwordInput.value=''; accessDenied.classList.remove('visible');
+  document.getElementById('loginScreen').classList.remove('hidden');
+});
+
+function initClock() {
+  function tick(){
+    const now=new Date(), hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0'), ss=String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('heroClock').textContent=`${hh}:${mm}:${ss}`;
+    const days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+    const mons=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    document.getElementById('heroDate').textContent=`${days[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')} ${mons[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tick(); setInterval(tick,1000);
+}
+
+async function initBattery() {
+  if(!navigator.getBattery){ document.getElementById('batLabel').textContent='N/A'; return; }
+  try {
+    const bat=await navigator.getBattery();
+    function updateBat(){ const pct=Math.round(bat.level*100); document.getElementById('batLabel').textContent=pct+'%'; let icon='🔋'; if(bat.charging) icon='⚡'; else if(pct<=20) icon='🪫'; document.getElementById('batIcon').textContent=icon; }
+    updateBat(); bat.addEventListener('levelchange',updateBat); bat.addEventListener('chargingchange',updateBat);
+  } catch { document.getElementById('batLabel').textContent='--'; }
+}
+
+function initNetwork(){
+  const dot=document.getElementById('netDot'), label=document.getElementById('netLabel');
+  function update(){ const online=navigator.onLine; label.textContent=online?'ONLINE':'OFFLINE'; dot.classList.toggle('offline',!online); }
+  update(); window.addEventListener('online',update); window.addEventListener('offline',update);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DOCUMENT CARDS
+───────────────────────────────────────────────────────────── */
+function renderDocuments(filter){
+  const grid=document.getElementById('docsGrid'); grid.innerHTML='';
+  const filtered=filter==='all'?DOCUMENTS:DOCUMENTS.filter(d=>d.category===filter);
+  filtered.forEach((doc,i)=>grid.appendChild(buildCard(doc,i)));
+  document.getElementById('visibleCount').textContent=filtered.length+' FILES';
+}
+
+function buildCard(doc,idx){
+  // doc.file is now a full direct URL (e.g. https://i.ibb.co/...)
+  const path = doc.file;
+  const filename = doc.title.toLowerCase().replace(/\s+/g,'-') + '.jpg';
+  const card=document.createElement('div'); card.className='doc-card'; card.style.animationDelay=(idx*0.15)+'s';
+  const isPlaceholder = path.includes('CHANGE_ME');
+  const previewHTML = isPlaceholder
+    ? `<div class="card-preview"><div class="card-preview-placeholder"><div class="pdf-icon-big">🖼️</div><span class="pdf-label">${doc.title.toUpperCase()}</span></div></div>`
+    : doc.type==='image'
+      ? `<div class="card-preview"><img src="${path}" alt="${doc.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-preview-placeholder\\'><div class=\\'pdf-icon-big\\'>🖼️</div><span class=\\'pdf-label\\'>${doc.title.toUpperCase()}</span></div>'"/></div>`
+      : `<div class="card-preview"><div class="card-preview-placeholder"><div class="pdf-icon-big">📄</div><span class="pdf-label">PDF DOCUMENT</span></div></div>`;
+  const catClass=`cat-${doc.category}`, catIcon=CAT_ICONS[doc.category]||'📁';
+  card.innerHTML=`${previewHTML}<div class="card-body"><span class="card-cat ${catClass}">${catIcon} ${doc.category.toUpperCase()}</span><h3 class="card-title"><span>${doc.icon}</span> ${doc.title}</h3><div class="card-actions"><button class="card-btn btn-view" ${isPlaceholder?'disabled style="opacity:0.4"':''}>👁 VIEW</button><button class="card-btn btn-dl" ${isPlaceholder?'disabled style="opacity:0.4"':''}>⬇ DOWNLOAD</button></div></div>`;
+  if(!isPlaceholder){
+    card.querySelector('.btn-view').addEventListener('click',()=>{ SFX.click(); openModal(path,doc.title,doc.type); });
+    card.querySelector('.btn-dl').addEventListener('click',()=>{ SFX.download(); downloadFile(path,filename); });
+  }
+  return card;
+}
+
+function updateCounts(){
+  document.getElementById('totalDocs').textContent=DOCUMENTS.length;
+  document.getElementById('totalCats').textContent=new Set(DOCUMENTS.map(d=>d.category)).size;
+}
+
+function bindFilterPills(){
+  document.querySelectorAll('.filter-pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{
+      SFX.click();
+      document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active'); renderDocuments(pill.dataset.cat);
+    });
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODAL
+───────────────────────────────────────────────────────────── */
+const modal=document.getElementById('docModal'), modalBody=document.getElementById('modalBody');
+const modalTitle=document.getElementById('modalTitle'), modalClose=document.getElementById('modalClose');
+const modalDlBtn=document.getElementById('modalDlBtn');
+let _currentModalPath='', _currentModalFile='';
+
+function openModal(path,title,type){
+  _currentModalPath=path; _currentModalFile=path.split('/').pop();
+  modalTitle.textContent=title.toUpperCase(); modalBody.innerHTML='';
+  if(type==='image'){
+    const img=document.createElement('img'); img.src=path; img.alt=title;
+    img.onerror=()=>{ modalBody.innerHTML=`<p style="color:var(--text-dim);font-family:var(--font-mono);font-size:.75rem;padding:24px;text-align:center;">⚠ Image not found at:<br><code style="color:var(--cyan)">${path}</code></p>`; };
+    modalBody.appendChild(img);
+  } else {
+    const iframe=document.createElement('iframe'); iframe.src=path; iframe.title=title;
+    modalBody.appendChild(iframe);
+  }
+  modalDlBtn.onclick=()=>downloadFile(_currentModalPath,_currentModalFile);
+  modal.classList.remove('hidden'); document.body.style.overflow='hidden';
+}
+
+function closeModal(){ modal.classList.add('hidden'); modalBody.innerHTML=''; document.body.style.overflow=''; }
+modalClose.addEventListener('click',()=>{ SFX.click(); closeModal(); });
+modal.addEventListener('click',e=>{ if(e.target===modal){ SFX.click(); closeModal(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function downloadFile(path,filename){
+  const a=document.createElement('a'); a.href=path; a.download=filename; a.target='_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+  </script>
+</body>
+</html>
